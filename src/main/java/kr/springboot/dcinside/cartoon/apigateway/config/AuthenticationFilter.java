@@ -2,6 +2,7 @@ package kr.springboot.dcinside.cartoon.apigateway.config;
 
 
 import io.jsonwebtoken.Claims;
+import kr.springboot.dcinside.cartoon.apigateway.service.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
@@ -19,7 +20,7 @@ import reactor.core.publisher.Mono;
 public class AuthenticationFilter implements GatewayFilter {
 
     private final RouterValidator routerValidator;//custom route validator
-    private final JwtUtil jwtUtil;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
@@ -31,7 +32,7 @@ public class AuthenticationFilter implements GatewayFilter {
 
             final String token = this.getAuthHeader(request);
 
-            if (jwtUtil.isInvalid(token))
+            if (!jwtTokenProvider.validateToken(token.split(" ")[1].trim()))
                 return this.onError(exchange, "Authorization header is invalid", HttpStatus.UNAUTHORIZED);
 
             this.populateRequestWithHeaders(exchange, token);
@@ -57,7 +58,7 @@ public class AuthenticationFilter implements GatewayFilter {
     }
 
     private void populateRequestWithHeaders(ServerWebExchange exchange, String token) {
-        Claims claims = jwtUtil.getAllClaimsFromToken(token);
+        Claims claims = jwtTokenProvider.getClaimsFromJWT(token.split(" ")[1].trim());
         exchange.getRequest().mutate()
                 .header("id", String.valueOf(claims.get("id")))
                 .header("role", String.valueOf(claims.get("role")))
