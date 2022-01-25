@@ -19,7 +19,7 @@ import reactor.core.publisher.Mono;
 @Component
 public class AuthenticationFilter implements GatewayFilter {
 
-    private final RouterValidator routerValidator;//custom route validator
+    private final RouterValidator routerValidator;
     private final JwtTokenProvider jwtTokenProvider;
 
     @Override
